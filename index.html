@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shrawansathi - Login & Shop</title>
+    <style>
+        :root { --primary: #1b5e20; --secondary: #ff9800; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); }
+        
+        /* Auth Screens */
+        .auth-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; padding: 20px; text-align: center; }
+        .auth-box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        
+        /* Main App Layout */
+        #mainApp { display: none; }
+        header { background: var(--primary); color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Product Cards */
+        .container { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; padding: 15px; padding-bottom: 120px; }
+        .product-card { background: white; width: 160px; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .product-card img { width: 100%; height: 120px; object-fit: contain; border-radius: 8px; }
+        .product-card h3 { font-size: 14px; margin: 10px 0; height: 35px; overflow: hidden; }
+        
+        /* UI Elements */
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn { background: var(--primary); color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .logout-btn { background: #d32f2f; padding: 5px 10px; font-size: 12px; width: auto; }
+        
+        /* Footer Cart */
+        .footer-cart { position: fixed; bottom: 0; width: 100%; background: white; padding: 15px; border-top: 2px solid #eee; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+
+<div id="authPage" class="auth-container">
+    <div class="auth-box" id="regBox">
+        <h2>Please Register Now</h2>
+        <input type="text" id="regName" placeholder="Aapka Naam">
+        <input type="number" id="regPhone" placeholder="Mobile Number">
+        <button class="btn" onclick="register()">Click Me</button>
+        <p style="font-size: 14px;">Pehle se account hai? <a href="#" onclick="showLogin()">Login</a></p>
+    </div>
+
+    <div class="auth-box" id="loginBox" style="display: none;">
+        <h2>Login</h2>
+        <input type="number" id="loginPhone" placeholder="Mobile Number">
+        <button class="btn" onclick="login()">Verify OTP (1234)</button>
+        <p style="font-size: 14px;"><a href="#" onclick="showReg()">Create New Account</a></p>
+    </div>
+</div>
+
+<div id="mainApp">
+    <header>
+        <button class="btn logout-btn" onclick="logout()">Logout</button>
+        <h2 style="margin:0; font-size: 18px;">Welcome Shrawansathi</h2>
+        <div id="userNameDisp" style="font-size: 12px;"></div>
+    </header>
+
+    <div style="padding: 15px; background: white; margin: 10px; border-radius: 10px;">
+        <input type="text" id="deliveryAddr" placeholder="Delivery ka Pata (Ghar ka pata)">
+    </div>
+
+    <div class="container" id="productGrid">
+        </div>
+
+    <div class="footer-cart">
+        <div>Total: <b id="totalBill">₹0</b></div>
+        <button class="btn" style="width: auto; background: #25D366;" onclick="orderNow()">WhatsApp Order</button>
+    </div>
+</div>
+
+<script>
+    // --- PRODUCT DATA (Name, Photo, Price) ---
+    const products = [
+        { name: 'Aashirvaad Aata (5kg)', price: 245, img: 'https://m.media-amazon.com/images/I/81q77Q3W95L._SL1500_.jpg' },
+        { name: 'Fortune Soyabean Oil (1L)', price: 158, img: 'https://m.media-amazon.com/images/I/71Y6pWIdtWL._SL1500_.jpg' },
+        { name: 'Tata Salt (1kg)', price: 28, img: 'https://m.media-amazon.com/images/I/61U7h-696tL._SL1500_.jpg' },
+        { name: 'Sugar / Cheeni (1kg)', price: 44, img: 'https://m.media-amazon.com/images/I/61NoD9NfS4L._SL1000_.jpg' },
+        { name: 'Maggi Noodles', price: 14, img: 'https://m.media-amazon.com/images/I/81p-7eKAnqL._SL1500_.jpg' },
+        { name: 'Lux Soap (1pc)', price: 35, img: 'https://m.media-amazon.com/images/I/61KxGv+34+L._SL1000_.jpg' },
+        { name: 'Colgate Paste', price: 55, img: 'https://m.media-amazon.com/images/I/6169Z-iH9CL._SL1000_.jpg' }
+    ];
+
+    let cart = [];
+    let currentUser = null;
+
+    // --- AUTH LOGIC ---
+    function showLogin() { document.getElementById('regBox').style.display='none'; document.getElementById('loginBox').style.display='block'; }
+    function showReg() { document.getElementById('loginBox').style.display='none'; document.getElementById('regBox').style.display='block'; }
+
+    function register() {
+        let name = document.getElementById('regName').value;
+        let phone = document.getElementById('regPhone').value;
+        if(!name || phone.length < 10) { alert("Sahi detail bharein!"); return; }
+        currentUser = { name, phone };
+        alert("Registration Successful! Ab login karein.");
+        showLogin();
+    }
+
+    function login() {
+        let phone = document.getElementById('loginPhone').value;
+        if(phone.length >= 10) {
+            document.getElementById('authPage').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            document.getElementById('userNameDisp').innerText = "Namaste, " + (currentUser ? currentUser.name : "Grahak");
+            loadStore();
+        } else { alert("Pehle Register karein ya sahi number daalein!"); }
+    }
+
+    function logout() { location.reload(); }
+
+    // --- STORE LOGIC ---
+    function loadStore() {
+        const grid = document.getElementById('productGrid');
+        grid.innerHTML = "";
+        products.forEach((p, i) => {
+            grid.innerHTML += `
+                <div class="product-card">
+                    <img src="${p.img}">
+                    <h3>${p.name}</h3>
+                    <p class="price">₹${p.price}</p>
+                    <button class="btn" style="padding:5px; font-size:12px;" onclick="addToCart(${i})">Add to Cart</button>
+                </div>`;
+        });
+    }
+
+    function addToCart(i) {
+        cart.push(products[i]);
+        let total = cart.reduce((s, item) => s + item.price, 0);
+        document.getElementById('totalBill').innerText = "₹" + total;
+    }
+
+    function orderNow() {
+        let addr = document.getElementById('deliveryAddr').value;
+        if(!addr) { alert("Pata likhna zaroori hai!"); return; }
+        if(cart.length === 0) { alert("Cart khali hai!"); return; }
+
+        let items = cart.map((it, idx) => `${idx+1}. ${it.name}`).join('%0A');
+        let total = document.getElementById('totalBill').innerText;
+        let phone = document.getElementById('loginPhone').value;
+        
+        const myWhatsApp = "919876543210"; // <--- APNA NUMBER DALEIN
+        const text = `*NAYA ORDER*%0A*Customer:* ${phone}%0A*Pata:* ${addr}%0A%0A*Items:*%0A${items}%0A%0A*Total Bill:* ${total}`;
+        window.open(`https://wa.me/${myWhatsApp}?text=${text}`, '_blank');
+    }
+</script>
+
+</body>
+</html>
